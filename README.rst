@@ -9,15 +9,15 @@ Framework for creating a tool performing various tasks based on Natural Language
 Introduction
 **************************************************************************
 
-This Package provides NLParser class which is the base class for
-your bot. Your bot will take orders in natural language and performing
-various actions based on the Rules which you specify.
+This Package provides Botify class can be used to create your bot.
+Your bot will take orders in natural language and performing
+various actions based on the List of Tasks which you specify.
 
 Note that, this package does not intends to really understand the
 natural langauge. Instead, you need to specify a mapping between
 various keywords and the tasks you need your bot to perform. This
 technique works pretty well as demonstrated by our example project
-`botify-calc`.
+`nlcalc <https://github.com/pri22296/nlcalc>`_.
 
 Features include:
 
@@ -48,6 +48,13 @@ Installation
 **************************************************************************
 Links
 **************************************************************************
+
+* `Documentation <http://botify.readthedocs.io/en/latest/>`_
+
+* `Source <https://github.com/pri22296/botify>`_
+
+* `API Reference <http://botify.readthedocs.io/en/latest/source/botify.html#module-botify>`_
+
 
 .. inclusion-marker-links-end
 

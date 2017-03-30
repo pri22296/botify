@@ -1,3 +1,3 @@
-from botify.botify import NLParser
+from botify.botify import Botify
 
-__all__ = ['NLParser']
+__all__ = ['Botify']

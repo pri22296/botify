@@ -1,6 +1,6 @@
 from inspect import getargspec
     
-class NLParser:
+class Botify:
     """Framework for creating tools which perform various tasks
     based on natural language.
 
