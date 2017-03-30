@@ -12,42 +12,48 @@ class NLParser:
     ----------
     StrictModeEnabled : bool
         whether strict mode is enabled(Default True).
+
+    Parameters
+    ----------
+    is_token_data_callback : function
+        A function to determine whether a string token is a valid data.
+
+        The function should take a single parameter as input and return
+        True or False based on whether the token recieved is a valid data.
+        `data` is defined as a token which yields information which needs
+        to be passed to one of the defined tasks.
+
+    clean_data_callback : function
+        A function to perform any modification prior to passing the string
+        token to the appropriate task. This callback if specified, will be used
+        to generate the parameters which are to be passed to the tasks.
     """
-    def __init__(self, strict_mode_enabled=True):
+    def __init__(self, is_token_data_callback=None,
+                 clean_data_callback=None):
         self._parsed_list = []
         self._most_recent_report = []
-        self.strict_mode_enabled = strict_mode_enabled
+        
+        if is_token_data_callback is None:
+            self._is_token_data_callback = lambda x: False
+        else:
+            self._is_token_data_callback = is_token_data_callback
+        
+        if clean_data_callback is None:
+            self._clean_data_callback = lambda x: x
+        else:
+            self._clean_data_callback = clean_data_callback
+        
+        self._clean_data_callback = clean_data_callback
+        self.strict_mode_enabled = True
         self._tasks = {}
         self._rule_modifiers = {}
         self._context_modifiers = {}
         self._custom_modifiers = {}
         
-    def is_data(self, value):
-        """Whether the string passed is a valid data.
-
-        If `value` is a data, it will be passed to one of the
-        functions according to the rules. This method is meant to
-        be overridden by the child class.
-
-        Parameters
-        ----------
-        value : str
-            String token extracted from user input.
-        """
+    def _default_is_data(self, value):
         return False
 
-    def clean_data(self, value):
-        """Modify the string value which is a valid data to
-        a suitable form such that it can be passed to the
-        tasks.
-
-        This method is meant to be overridden by the child class.
-
-        Parameters
-        ----------
-        value : str
-            String token extracted from user input.
-        """
+    def _default_clean_data(self, value):
         return value
 
     # Returns the argument count of the function at _parsed_list[index]
@@ -58,7 +64,7 @@ class NLParser:
     def _get_priority_set(self):
         s = set()
         for item in self._parsed_list:
-            if self.is_data(item) is False:
+            if self._is_token_data_callback(item) is False:
                 s.add(item['context'][1])
         return s
 
@@ -162,51 +168,62 @@ class NLParser:
         self._parsed_list = []
         self._most_recent_report = []
         self._token_list = text.lower().split()
+
+        rm_list, cm_list, cust_list = [], [], []
         
         for item in self._token_list:
             
-            if(self.is_data(item)):
-                self._parsed_list.append(self.clean_data(item))
+            if(self._is_token_data_callback(item)):
+                self._parsed_list.append(self._clean_data_callback(item))
                 
             if item in self._tasks:
                 d = {}
                 d['context'] = self._tasks[item]['context']
                 d['rule'] = self._tasks[item]['rule']
-                d['keyword'] = item
+                d['task'] = item
                 self._parsed_list.append(d)
-                
+
             if item in self._rule_modifiers:
-                for key, value in self._rule_modifiers[item].items():
-                    try:
-                        task_index = len(self._parsed_list) + value[1]
-                        if self.is_data(self._parsed_list[task_index]):
-                            pass
-                        elif self._parsed_list[task_index]['keyword'] == key:
-                            self._parsed_list[task_index]['rule'] = value[0]
-                    except IndexError:
-                        pass
+                rm_list.append((len(self._parsed_list), item))
 
             if item in self._context_modifiers:
-                for key, value in self._context_modifiers[item].items():
-                    try:
-                        task_index = len(self._parsed_list) + value[1]
-                        if self.is_data(self._parsed_list[task_index]):
-                            pass
-                        elif self._parsed_list[task_index]['keyword'] == key:
-                            self._parsed_list[task_index]['context'] = value[0]
-                    except IndexError:
-                        pass
+                cm_list.append((len(self._parsed_list), item))
 
             if item in self._custom_modifiers:
-                for key, value in self._custom_modifiers[item].items():
-                    try:
-                        task_index = len(self._parsed_list) + value[2]
-                        if self.is_data(self._parsed_list[task_index]):
-                            pass
-                        elif self._parsed_list[task_index]['keyword'] == key:
-                            getattr(self, value[0])(*value[1])
-                    except IndexError:
+                cust_list.append((len(self._parsed_list), item))
+
+        for pos, item in rm_list:
+            for key, value in self._rule_modifiers[item].items():
+                try:
+                    task_index = pos + value[1]
+                    if self._is_token_data_callback(self._parsed_list[task_index]):
                         pass
+                    elif self._parsed_list[task_index]['task'] == key:
+                        self._parsed_list[task_index]['rule'] = value[0]
+                except IndexError:
+                    pass
+
+        for pos, item in cm_list:
+            for key, value in self._context_modifiers[item].items():
+                try:
+                    task_index = pos + value[1]
+                    if self._is_token_data_callback(self._parsed_list[task_index]):
+                        pass
+                    elif self._parsed_list[task_index]['task'] == key:
+                        self._parsed_list[task_index]['context'] = value[0]
+                except IndexError:
+                    pass
+
+        for pos, item in cust_list:
+            for key, value in self._custom_modifiers[item].items():
+                try:
+                    task_index = pos + value[2]
+                    if self._is_token_data_callback(self._parsed_list[task_index]):
+                        pass
+                    elif self._parsed_list[task_index]['task'] == key:
+                        getattr(self, value[0])(*value[1])
+                except IndexError:
+                    pass
                     
         return self._evaluate()
 
@@ -225,7 +242,7 @@ class NLParser:
                 temp = []
                 offset = 0
                 for index, item in enumerate(self._parsed_list):
-                    if self.is_data(item) is False:
+                    if self._is_token_data_callback(item) is False:
                         if(item['context'][1] == priority):
                             temp.append(index-offset)
                             offset += self._get_args_count(item['context'][0])
@@ -236,10 +253,10 @@ class NLParser:
                     # It gives a very detailed output
                     # print(task_index, temp, self._parsed_list)
                     
-                    # TODO: use the return value of _findData
+                    # TODO: use the return value of _find_data
                     self._find_data(-1, task_index)
         for item in self._parsed_list:
-            if self.is_data(item):
+            if self._is_token_data_callback(item):
                 pass
             else:
                 raise ValueError("Unable to Parse")
@@ -259,14 +276,14 @@ class NLParser:
             rule = self._parsed_list[task_index]['rule']
             for i in rule:
                 k = task_index + i
-                if self.is_data(self._parsed_list[k]) and 0 <= k < len(self._parsed_list):
+                if  0 <= k < len(self._parsed_list) and self._is_token_data_callback(self._parsed_list[k]):
                     data_index_list.append(k)
                 elif caller_index != k:
                     # the above check is necessary to prevent recursion cycles
                     status = self._find_data(task_index,k)
                     if status is True\
                        and 0 <= k < len(self._parsed_list)\
-                       and self.is_data(self._parsed_list[k])\
+                       and self._is_token_data_callback(self._parsed_list[k])\
                        and k not in data_index_list:
                         data_index_list.append(k)
                 else:
@@ -302,13 +319,8 @@ class NLParser:
         self._most_recent_report.append({'function': task_context[0].__name__,
                                          'parameters': tuple(data_list),
                                          'result': res})
-        if self.is_data(res) is True:
+        if self._is_token_data_callback(res) is True:
             self._parsed_list.insert(task_index-offset, res)
-            #print(task_context[0].__name__ , tuple(data_list), ' = ', res)
-            
-        else:
-            pass
-            #print(task_context[0].__name__ , tuple(data_list))
         
     def _get_default_rule(self, task_index):
         l = []
