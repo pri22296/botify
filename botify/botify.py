@@ -28,6 +28,10 @@ class Botify:
         token to the appropriate task. This callback if specified, will be used
         to generate the parameters which are to be passed to the tasks.
     """
+    ACTION_DELETE = 'delete'
+    ACTION_UPDATE_RULE = 'update_rule'
+    ACTION_UPDATE_CONTEXT = 'update_context'
+    
     def __init__(self, is_token_data_callback=None,
                  clean_data_callback=None):
         self._parsed_list = []
@@ -46,15 +50,9 @@ class Botify:
         self._clean_data_callback = clean_data_callback
         self.strict_mode_enabled = True
         self._tasks = {}
-        self._rule_modifiers = {}
-        self._context_modifiers = {}
-        self._custom_modifiers = {}
-        
-    def _default_is_data(self, value):
-        return False
-
-    def _default_clean_data(self, value):
-        return value
+        #self._rule_modifiers = {}
+        #self._context_modifiers = {}
+        self._modifiers = {}
 
     # Returns the argument count of the function at _parsed_list[index]
     @staticmethod
@@ -67,6 +65,12 @@ class Botify:
             if self._is_token_data_callback(item) is False:
                 s.add(item['context'][1])
         return s
+
+    def _get_action_mapping(self):
+        return {ACTION_DELETE : self._action_delete,
+                ACTION_UPDATE_RULE : self._action_update_rule,
+                ACTION_UPDATE_CONTEXT : self._action_update_context,
+        }
 
     def add_task(self, keywords, context, rule):
         """Map a function to a list of keywords
@@ -84,49 +88,7 @@ class Botify:
         for keyword in keywords:
             self._tasks[keyword] = {'context': context, 'rule': rule}
 
-    def add_rule_modifier(self, modifier, keywords, rule, relative_pos):
-        """Modify rules for existing tasks based on presence of a keyword.
-
-        Parameters
-        ----------
-        modifier : str
-            A string value which would trigger the given Rule Modifier.
-        keywords : iterable of str
-            sequence of strings which are keywords for some task,
-            for which the rule has to be modified.
-        rule : tuple
-            A tuple of integers, which act as the new rule for the task
-            referred by `relative_pos`.
-        relative_pos : int
-            Relative position of the task whose rule should be modified
-            in the presence of `modifier`.
-        """
-        modifier_dict = self._rule_modifiers.get(modifier, {})
-        modifier_dict.update(dict.fromkeys(keywords, (rule, relative_pos)))
-        self._rule_modifiers[modifier] = modifier_dict
-
-    def add_context_modifier(self, modifier, keywords, context, relative_pos):
-        """Modify context for existing tasks based on presence of a keyword.
-
-        Parameters
-        ----------
-        modifier : str
-            A string value which would trigger the given Context Modifier.
-        keywords : iterable of str
-            sequence of strings which are keywords for some task,
-            for which the context has to be modified.
-        context : Context
-            A Context object, which act as the new context for the task
-            referred by `relative_pos`.
-        relative_pos : int
-            Relative position of the task whose context should be modified
-            in the presence of `modifier`.
-        """
-        modifier_dict = self._context_modifiers.get(modifier, {})
-        modifier_dict.update(dict.fromkeys(keywords, (context, relative_pos)))
-        self._context_modifiers[modifier] = modifier_dict
-
-    def add_custom_modifier(self, modifier, keywords, action, params, relative_pos):
+    def add_modifier(self, modifier, keywords, relative_pos, action, parameter=None):
         """Modify existing tasks based on presence of a keyword.
 
         Parameters
@@ -145,15 +107,23 @@ class Botify:
             `action`.
         relative_pos : int
             Relative position of the task which should be modified
-            in the presence of `modifier`.
+            in the presence of `modifier`. It's value can never be 0. Data
+            fields should also be considered when calculating the relative
+            position.
+
         """
-        modifier_dict = self._custom_modifiers.get(modifier, {})
-        value = (action, params, relative_pos)
-        modifier_dict.update(dict.fromkeys(keywords, value))
-        self._custom_modifiers[modifier] = modifier_dict
+        if relative_pos == 0:
+            raise ValueError("relative_pos cannot be 0")
+        modifier_dict = self._modifiers.get(modifier, {})
+        value = (action, parameter, relative_pos)
+        for keyword in keywords:
+            action_list = list(modifier_dict.get(keyword, []))
+            action_list.append(value)
+            modifier_dict[keyword] = tuple(action_list)
+        self._modifiers[modifier] = modifier_dict
     
     def parse(self, text):
-        """Parse the string `UserInput` and return a tuple of left over Data
+        """Parse the string `text` and return a tuple of left over Data fields.
 
         Parameters
         ----------
@@ -169,7 +139,7 @@ class Botify:
         self._most_recent_report = []
         self._token_list = text.lower().split()
 
-        rm_list, cm_list, cust_list = [], [], []
+        modifier_index_list = []
         
         for item in self._token_list:
             
@@ -183,49 +153,30 @@ class Botify:
                 d['task'] = item
                 self._parsed_list.append(d)
 
-            if item in self._rule_modifiers:
-                rm_list.append((len(self._parsed_list), item))
+            if item in self._modifiers:
+                modifier_index_list.append((len(self._parsed_list), item))
 
-            if item in self._context_modifiers:
-                cm_list.append((len(self._parsed_list), item))
-
-            if item in self._custom_modifiers:
-                cust_list.append((len(self._parsed_list), item))
-
-        for pos, item in rm_list:
-            for key, value in self._rule_modifiers[item].items():
-                try:
-                    task_index = pos + value[1]
-                    if self._is_token_data_callback(self._parsed_list[task_index]):
-                        pass
-                    elif self._parsed_list[task_index]['task'] == key:
-                        self._parsed_list[task_index]['rule'] = value[0]
-                except IndexError:
-                    pass
-
-        for pos, item in cm_list:
-            for key, value in self._context_modifiers[item].items():
-                try:
-                    task_index = pos + value[1]
-                    if self._is_token_data_callback(self._parsed_list[task_index]):
-                        pass
-                    elif self._parsed_list[task_index]['task'] == key:
-                        self._parsed_list[task_index]['context'] = value[0]
-                except IndexError:
-                    pass
-
-        for pos, item in cust_list:
-            for key, value in self._custom_modifiers[item].items():
-                try:
-                    task_index = pos + value[2]
-                    if self._is_token_data_callback(self._parsed_list[task_index]):
-                        pass
-                    elif self._parsed_list[task_index]['task'] == key:
-                        getattr(self, value[0])(*value[1])
-                except IndexError:
-                    pass
-                    
+        self._apply_modifiers(modifier_index_list)
         return self._evaluate()
+
+    def _apply_modifiers(self, modifier_index_list):
+        for pos, item in modifier_index_list:
+            for key, action_list in self._modifiers[item].items():
+                for value in action_list:
+                    try:
+                        task_index = pos + value[2]
+                        if value[2] > 0:
+                            task_index -= 1
+                        if self._is_token_data_callback(self._parsed_list[task_index]):
+                            pass
+                        elif self._parsed_list[task_index]['task'] == key:
+                            action = self._get_action_mapping[value[0]]
+                            if value[1] is None:
+                                action(task_index)
+                            else:
+                                action(task_index, value[1])
+                    except IndexError:
+                        pass
 
     def _get_report(self):
         """Return a list of dicts with parsing info.
@@ -251,7 +202,7 @@ class Botify:
                 for task_index in temp:
                     # While Debugging Uncomment the next line.
                     # It gives a very detailed output
-                    # print(task_index, temp, self._parsed_list)
+                    #print(task_index, temp, self._parsed_list)
                     
                     # TODO: use the return value of _find_data
                     self._find_data(-1, task_index)
@@ -276,18 +227,19 @@ class Botify:
             rule = self._parsed_list[task_index]['rule']
             for i in rule:
                 k = task_index + i
-                if  0 <= k < len(self._parsed_list) and self._is_token_data_callback(self._parsed_list[k]):
-                    data_index_list.append(k)
-                elif caller_index != k:
-                    # the above check is necessary to prevent recursion cycles
-                    status = self._find_data(task_index,k)
-                    if status is True\
-                       and 0 <= k < len(self._parsed_list)\
-                       and self._is_token_data_callback(self._parsed_list[k])\
-                       and k not in data_index_list:
+                if  0 <= k < len(self._parsed_list):
+                    if self._is_token_data_callback(self._parsed_list[k]):
                         data_index_list.append(k)
-                else:
-                    return False
+                    elif caller_index != k:
+                        # the above check is necessary to prevent recursion cycles
+                        status = self._find_data(task_index,k)
+                        if status is True\
+                           and 0 <= k < len(self._parsed_list)\
+                           and self._is_token_data_callback(self._parsed_list[k])\
+                           and k not in data_index_list:
+                            data_index_list.append(k)
+                    else:
+                        return False
                 if len(data_index_list) == args_count:
                     break
             if len(data_index_list) == args_count:
@@ -300,8 +252,14 @@ class Botify:
                 else:
                     raise ValueError('Unable to Parse. Try a different Input')
 
-    def delete(self, task_index):
+    def _action_delete(self, task_index):
         del self._parsed_list[len(self._parsed_list) + task_index]
+
+    def _action_update_rule(self, task_index, rule):
+        self._parsed_list[task_index]['rule'] = rule
+
+    def _action_update_context(self, task_index, context):
+        self._parsed_list[task_index]['context'] = context
             
     def _apply_task(self, task_index, data_index_list):
         task_context = self._parsed_list[task_index]['context']
