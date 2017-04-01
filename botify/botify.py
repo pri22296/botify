@@ -1,4 +1,7 @@
 from inspect import getargspec
+from collections import namedtuple
+
+Context = namedtuple('Context', ('function', 'priority'))
     
 class Botify:
     """Framework for creating tools which perform various tasks
@@ -98,19 +101,17 @@ class Botify:
         keywords : iterable of str
             sequence of strings which are keywords for some task,
             which has to be modified.
-        action : str
-            String value representing the action which should be performed
-            on the task. Action represents calling a arbitrary function
-            to perform th emodification.
-        params : tuple
-            A tuple of values to be passed to the function represented by
-            `action`.
         relative_pos : int
             Relative position of the task which should be modified
             in the presence of `modifier`. It's value can never be 0. Data
             fields should also be considered when calculating the relative
             position.
-
+        action : str
+            String value representing the action which should be performed
+            on the task. Action represents calling a arbitrary function
+            to perform th emodification.
+        parameter : object
+            value required by the `action`.(Default None)
         """
         if relative_pos == 0:
             raise ValueError("relative_pos cannot be 0")
@@ -194,9 +195,9 @@ class Botify:
                 offset = 0
                 for index, item in enumerate(self._parsed_list):
                     if self._is_token_data_callback(item) is False:
-                        if(item['context'][1] == priority):
+                        if(item['context'].priority == priority):
                             temp.append(index-offset)
-                            offset += self._get_args_count(item['context'][0])
+                            offset += self._get_args_count(item['context'].function)
                 if(len(temp) == 0):
                     break;
                 for task_index in temp:
@@ -218,7 +219,7 @@ class Botify:
         # it has already been evaluated
         # so we just need to return
         try:
-            args_count = self._get_args_count(self._parsed_list[task_index]['context'][0])
+            args_count = self._get_args_count(self._parsed_list[task_index]['context'].function)
         except (TypeError, IndexError):
             return False
         should_repeat = not self.strict_mode_enabled
@@ -273,8 +274,8 @@ class Botify:
                 offset += 1
         for index in sorted(data_index_list, reverse=True):
             del self._parsed_list[index]
-        res = task_context[0](*data_list)
-        self._most_recent_report.append({'function': task_context[0].__name__,
+        res = task_context.function(*data_list)
+        self._most_recent_report.append({'function': task_context.function.__name__,
                                          'parameters': tuple(data_list),
                                          'result': res})
         if self._is_token_data_callback(res) is True:
@@ -283,7 +284,7 @@ class Botify:
     def _get_default_rule(self, task_index):
         l = []
         k = [-1,1]
-        for i in range(self._get_args_count(self._parsed_list[task_index]['context'][0])):
+        for i in range(self._get_args_count(self._parsed_list[task_index]['context'].function)):
             l += list(map(lambda x: (i+1)*x, k))
         return l
 

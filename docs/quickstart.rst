@@ -38,21 +38,21 @@ when it sees the word bot.
 
 .. code:: python
    
-   >>> from botify import Botify
+   >>> from botify import Botify, Context
    >>> my_bot = Botify()
-   >>> my_bot.add_task(keywords=('bot',), context=(lambda: print("Hello"), 1), rule=())
+   >>> my_bot.add_task(keywords=('bot',), context=Context(lambda: print("Hello"), 1), rule=())
    >>> result = my_bot.parse("how are you bot")
    Hello
    >>> print(result)
    ()
    
 Since our task needed no parameters the rule was kept empty and also no
-callbacks were passed to the Botify constructor. Context is just a tuple
-of the function and it's priority. priority can be any int or float value.
+callbacks were passed to the Botify constructor. Context can be passed a
+function and it's priority. priority can be any int or float value.
 Higher the priority value, earlier the task is run. The parse method returns
 a tuple of left over data fields which were not consumed by any of the tasks.
 Note that if a function returns a value which is a valid data field, it is
-inserted into the parsed list.
+inserted back into the parsed list.
 
 
 =========================================================================
@@ -94,16 +94,16 @@ target tasks if found. Let us again see an example.
 
 .. code:: python
 
-   >>> from botify import Botify
+   >>> from botify import Botify, Context
    >>> my_bot = Botify()
    >>> my_bot.add_task(keywords=('bot',),
-                       context=(lambda: print("Hello"), 1),
+                       context=Context(lambda: print("Hello"), 1),
                        rule=())
    >>> my_bot.add_modifier(modifier='my', 
                            keywords=('bot',),
                            relative_pos=1,
                            action=Botify.ACTION_UPDATE_CONTEXT,
-                           parameter=(lambda: print("I am your bot"), 1))
+                           parameter=Context(lambda: print("I am your bot"), 1))
    >>> result = my_bot.parse("how are you bot")
    Hello
    >>> result = my_bot.parse("how is my bot")
