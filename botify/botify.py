@@ -70,9 +70,9 @@ class Botify:
         return s
 
     def _get_action_mapping(self):
-        return {ACTION_DELETE : self._action_delete,
-                ACTION_UPDATE_RULE : self._action_update_rule,
-                ACTION_UPDATE_CONTEXT : self._action_update_context,
+        return {self.ACTION_DELETE : self._action_delete,
+                self.ACTION_UPDATE_RULE : self._action_update_rule,
+                self.ACTION_UPDATE_CONTEXT : self._action_update_context,
         }
 
     def add_task(self, keywords, context, rule):
@@ -171,7 +171,8 @@ class Botify:
                         if self._is_token_data_callback(self._parsed_list[task_index]):
                             pass
                         elif self._parsed_list[task_index]['task'] == key:
-                            action = self._get_action_mapping[value[0]]
+                            action_map = self._get_action_mapping()
+                            action = action_map[value[0]]
                             if value[1] is None:
                                 action(task_index)
                             else:
@@ -253,8 +254,8 @@ class Botify:
                 else:
                     raise ValueError('Unable to Parse. Try a different Input')
 
-    def _action_delete(self, task_index):
-        del self._parsed_list[len(self._parsed_list) + task_index]
+    def _action_delete(self, task_index, offset):
+        del self._parsed_list[task_index + offset]
 
     def _action_update_rule(self, task_index, rule):
         self._parsed_list[task_index]['rule'] = rule
