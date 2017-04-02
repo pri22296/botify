@@ -62,7 +62,17 @@ Modifiers
 Modifiers are keywords which triggers a particular action on one of
 it's target tasks. Modifiers can be used to handle the case where there are
 multiple meanings for similar sentences which is common in a natural language.
-There are many actions that can be performed using modifiers.
+Here is the list of all supported actions.
+
+============================  =====================================
+Action                          Parameter
+============================  =====================================
+Botify.ACTION_DELETE            An offset from the target task
+Botify.ACTION_UPDATE_RULE       The new rule of the target task
+Botify.ACTION_UPDATE_CONTEXT    The new context of the target task
+============================  =====================================
+
+Let's see them in use one by one.
 
 -------------------------------------------------------------------------
 Updating Rules
@@ -114,9 +124,10 @@ but `my` changes it to print `I am your bot`. Note that relative_pos can never b
 0 since modifiers are never stored in the parsed list.
 
 -------------------------------------------------------------------------
-Removal of a task
+Removal of a Field
 -------------------------------------------------------------------------
 
-To delete a task from the internal parse list you can use the action, 
-Botify.ACTION_DELETE. It removes the task if found at `relative_pos`
-and corresponds to one of the tasks in the modifiers's target tasks.
+To delete a Field from the internal parse list you can use the action, 
+Botify.ACTION_DELETE. If one of the target tasks are found at `relative_pos`
+, the modifier deletes an entry corresponding to the target with specified
+offset.

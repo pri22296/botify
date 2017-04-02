@@ -9,6 +9,20 @@ Framework for creating a tool performing various tasks based on Natural Language
 Introduction
 **************************************************************************
 
+.. image:: https://badge.fury.io/py/botify.svg
+    :target: https://badge.fury.io/py/botify
+    
+.. image:: https://api.codacy.com/project/badge/Grade/47e374815173493b82c4cc3a4a3b4194
+    :target: https://www.codacy.com/app/pri22296/botify?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pri22296/botify&amp;utm_campaign=Badge_Grade
+    
+.. image:: https://landscape.io/github/pri22296/botify/master/landscape.svg?style=flat
+    :target: https://landscape.io/github/pri22296/botify/master
+    :alt: Code Health
+    
+.. image:: https://readthedocs.org/projects/botify/badge/?version=latest
+    :alt: Documentation Status
+    :target: http://botify.readthedocs.io/en/latest/?badge=latest
+
 This Package provides Botify class can be used to create your bot.
 Your bot will take orders in natural language and performing
 various actions based on the List of Tasks which you specify.
