@@ -1,8 +1,8 @@
-from inspect import getargspec
+from inspect import signature
 from collections import namedtuple
 
 Context = namedtuple('Context', ('function', 'priority'))
-    
+
 class Botify:
     """Framework for creating tools which perform various tasks
     based on natural language.
@@ -60,7 +60,7 @@ class Botify:
     # Returns the argument count of the function at _parsed_list[index]
     @staticmethod
     def _get_args_count(function):
-        return len(getargspec(function).args)
+        return len(signature(function).parameters)
 
     def _get_priority_set(self):
         s = set()
@@ -139,9 +139,7 @@ class Botify:
         self._parsed_list = []
         self._most_recent_report = []
         self._token_list = text.lower().split()
-
         modifier_index_list = []
-        
         for item in self._token_list:
             
             if(self._is_token_data_callback(item)):
@@ -204,7 +202,7 @@ class Botify:
                 for task_index in temp:
                     # While Debugging Uncomment the next line.
                     # It gives a very detailed output
-                    #print(task_index, temp, self._parsed_list)
+                    # print(task_index, temp, self._parsed_list)
                     
                     # TODO: use the return value of _find_data
                     self._find_data(-1, task_index)
