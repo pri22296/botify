@@ -1,13 +1,8 @@
 ######################################################################################
-Framework for creating a tool performing various tasks based on Natural Language query
+Botify
 ######################################################################################
 
-
-.. inclusion-marker-introduction-start
-
-**************************************************************************
-Introduction
-**************************************************************************
+.. inclusion-marker-badges-start
 
 .. image:: https://badge.fury.io/py/botify.svg
     :target: https://badge.fury.io/py/botify
@@ -25,6 +20,15 @@ Introduction
 .. image:: https://readthedocs.org/projects/botify/badge/?version=latest
     :alt: Documentation Status
     :target: http://botify.readthedocs.io/en/latest/?badge=latest
+
+.. inclusion-marker-badges-end
+
+
+.. inclusion-marker-introduction-start
+
+**************************************************************************
+Introduction
+**************************************************************************
 
 This Package provides Botify class can be used to create your bot.
 Your bot will take orders in natural language and performing
