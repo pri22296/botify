@@ -1,6 +1,7 @@
 import unittest
 from botify import Botify, Context
 
+
 class BotifyTestCase(unittest.TestCase):
     def setUp(self):
         self.flag = 0
@@ -14,7 +15,7 @@ class BotifyTestCase(unittest.TestCase):
 
     def task1(self):
         self.flag = 1
-        
+
     def test_add_task(self):
         context = Context(self.task1, 0)
         rule = (-1,)
