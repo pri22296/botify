@@ -1,4 +1,4 @@
-from inspect import signature
+from .utils import get_args_count
 from collections import namedtuple
 
 Context = namedtuple('Context', ('function', 'priority'))
@@ -56,11 +56,6 @@ class Botify:
         #self._rule_modifiers = {}
         #self._context_modifiers = {}
         self._modifiers = {}
-
-    # Returns the argument count of the function at _parsed_list[index]
-    @staticmethod
-    def _get_args_count(function):
-        return len(signature(function).parameters)
 
     def _get_priority_set(self):
         s = set()
@@ -196,7 +191,7 @@ class Botify:
                     if self._is_token_data_callback(item) is False:
                         if(item['context'].priority == priority):
                             temp.append(index-offset)
-                            offset += self._get_args_count(item['context'].function)
+                            offset += get_args_count(item['context'].function)
                 if(len(temp) == 0):
                     break;
                 for task_index in temp:
@@ -218,7 +213,7 @@ class Botify:
         # it has already been evaluated
         # so we just need to return
         try:
-            args_count = self._get_args_count(self._parsed_list[task_index]['context'].function)
+            args_count = get_args_count(self._parsed_list[task_index]['context'].function)
         except (TypeError, IndexError):
             return False
         should_repeat = not self.strict_mode_enabled
@@ -283,7 +278,7 @@ class Botify:
     def _get_default_rule(self, task_index):
         l = []
         k = [-1,1]
-        for i in range(self._get_args_count(self._parsed_list[task_index]['context'].function)):
+        for i in range(get_args_count(self._parsed_list[task_index]['context'].function)):
             l += list(map(lambda x: (i+1)*x, k))
         return l
 
