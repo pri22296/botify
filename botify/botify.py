@@ -3,7 +3,7 @@ from collections import namedtuple
 
 Context = namedtuple('Context', ('function', 'priority'))
 
-class Botify:
+class Botify(object):
     """Framework for creating tools which perform various tasks
     based on natural language.
 
@@ -188,7 +188,7 @@ class Botify:
                 temp = []
                 offset = 0
                 for index, item in enumerate(self._parsed_list):
-                    if self._is_token_data_callback(item) is False:
+                    if not self._is_token_data_callback(item):
                         if(item['context'].priority == priority):
                             temp.append(index-offset)
                             offset += get_args_count(item['context'].function)
