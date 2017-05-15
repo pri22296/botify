@@ -86,7 +86,8 @@ class Botify(object):
         for keyword in keywords:
             self._tasks[keyword] = {'context': context, 'rule': rule}
 
-    def add_modifier(self, modifier, keywords, relative_pos, action, parameter=None):
+    def add_modifier(self, modifier, keywords, relative_pos,
+                     action, parameter=None):
         """Modify existing tasks based on presence of a keyword.
 
         Parameters
@@ -161,7 +162,8 @@ class Botify(object):
                         task_index = pos + value[2]
                         if value[2] > 0:
                             task_index -= 1
-                        if self._is_token_data_callback(self._parsed_list[task_index]):
+                        if self._is_token_data_callback(
+                                self._parsed_list[task_index]):
                             pass
                         elif self._parsed_list[task_index]['task'] == key:
                             action_map = self._get_action_mapping()

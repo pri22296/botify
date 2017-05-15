@@ -7,6 +7,9 @@ Botify
 .. image:: https://badge.fury.io/py/botify.svg
     :target: https://badge.fury.io/py/botify
 
+.. image:: https://coveralls.io/repos/github/pri22296/botify/badge.svg?branch=master
+    :target: https://coveralls.io/github/pri22296/botify?branch=master
+
 .. image:: https://travis-ci.org/pri22296/botify.svg?branch=master
     :target: https://travis-ci.org/pri22296/botify
 
