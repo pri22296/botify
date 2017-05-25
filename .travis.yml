@@ -17,7 +17,17 @@ install:
 
 script:
     - coverage run test.py
-    
+
 after_success:
     - coveralls
 
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: pri22296
+  password:
+    secure: HvlVh/GCpmJnDW5qjRrrTvlML9ZIkMjVplAWRspJF3rJWwiCzl+2b/xElV2RVuaZKngUl5dKmYdlctxWBtIYdJUM+XM+N1TrBynzUh0oUCS3/MVXxf/pzqCscakC9rVo9EFBMSzCQQNqn+cEUxuO7mnDTPM5zz5d74cR6lGhRYrnCfRdPc1N8xNyG09xU+h7cWVHSMyhbpaKkwYvbhlcJNlPneHO1gR1hXKPuLeOe4HaKguY2iwkyu8LPNS2EDXqV//voY7jC/nub1EACUJtsoE9aB+JQfjlmGmMAz2E17DAb2UefKIZu74hoxAZ2pTOSrJS/C85fBvMJmYRMV4FYY15qRWcXIpSLgc9i+tpEGxClYjKRPrzzeOQgsbrar5QyoAHTucEXbhpFAoYLcgt+uw4uUiAV06QDDTzGl9djdySWz8OsTK2zd1SonacDpNW2ojP337N4aDMuiAVR0DNoyG81qgC80D0QFH+tNsL9BDMTYAw2N4lDXQ2u8INrak+z+rafHnz3/u0ShvbEPRR0iUnwpERhtLczU4ToYE54bdxU/S/haneJSLsfrFLwnKbmBgGprFKQoIVurcwUP9+wAIZ3JIofRu79eOww37OK//5WwGZdmGBmDFCUCR1lBhpXI5iNGCr6PnpK/4yAUtYxLXpLXatfwbEzJ7T9Ltg2O4=
+  on:
+    tags: true
+    repo: pri22296/botify
+    python: '3.6'
